@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from movie_rag.core.movie_rag_enhanced import MovieRAGSystem
+from movie_rag.core.movie_rag_system import MovieRAGSystem
 from movie_rag.data.movie_data_collector import TMDBDataCollector
 
 # Page config

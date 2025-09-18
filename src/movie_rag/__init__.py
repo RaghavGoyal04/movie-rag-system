@@ -10,10 +10,10 @@ This package provides:
 """
 
 __version__ = "1.0.0"
-__author__ = "Your Name"
-__email__ = "your.email@example.com"
+__author__ = "Raghav Goyal"
+__email__ = "gyl.rghv@gmail.com"
 
-from .core.movie_rag_enhanced import MovieRAGSystem
+from .core.movie_rag_system import MovieRAGSystem
 from .models.database import DatabaseManager
 from .data.movie_data_collector import TMDBDataCollector
 

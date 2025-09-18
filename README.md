@@ -87,31 +87,28 @@ python run_streamlit.py
 ```
 movie-rag-system/
 ├── src/movie_rag/           # Main application package
-│   ├── core/                # Core RAG functionality
-│   │   ├── movie_rag_enhanced.py  # Enhanced RAG system
-│   │   └── movie_rag.py           # Basic RAG system
+│   ├── core/                # Core RAG functionality (Modular Architecture)
+│   │   ├── movie_rag_system.py    # Main orchestrator
+│   │   ├── vectorstore_manager.py # ChromaDB & document processing
+│   │   └── qa_chain_manager.py    # LLM & QA chain operations
 │   ├── models/              # Database models and schemas
 │   │   └── database.py      # SQLAlchemy models
 │   ├── data/                # Data collection and processing
 │   │   └── movie_data_collector.py # TMDB data collector
-│   ├── services/            # Business logic services
-│   ├── utils/               # Utility functions
 │   └── app.py              # Streamlit web interface
 ├── tests/                   # Test suite
 │   ├── test_integration.py  # Integration tests
 │   ├── test_docker_chromadb.py # ChromaDB tests
-│   └── test_postgres_rag.py # PostgreSQL tests
-├── scripts/                 # Setup and utility scripts
-│   ├── postgres_setup.py    # Database setup
-│   └── setup_database.py    # Database initialization
-├── docs/                    # Documentation
-│   ├── POSTGRES_SETUP.md    # Database setup guide
-│   └── setup_instructions.md # Detailed setup instructions
+│   ├── test_postgres_rag.py # PostgreSQL tests
+│   ├── test_e2e.py         # End-to-end tests
+│   └── test_quick.py       # Quick component tests
 ├── data/                    # Data files (gitignored)
 │   └── movies_dataset.json  # Collected movie data
 ├── docker-compose.yml       # Docker services configuration
 ├── main.py                  # CLI entry point
 ├── run_streamlit.py         # Web app entry point
+├── README.md               # Project documentation
+├── QUICK_START.md          # Quick setup guide
 └── pyproject.toml          # Project configuration
 ```
 
@@ -138,7 +135,10 @@ graph TB
 - **Data Collection**: Automated TMDB API data fetching
 - **PostgreSQL**: Structured data storage with relationships
 - **ChromaDB**: Vector embeddings for semantic search
-- **RAG Engine**: LangChain-powered recommendation system
+- **RAG Engine**: Modular LangChain-powered system with:
+  - **VectorStore Manager**: ChromaDB operations & document processing
+  - **QA Chain Manager**: LLM operations & recommendation logic
+  - **Main Orchestrator**: System coordination & API management
 - **Web Interface**: Interactive Streamlit application
 
 ## 🛠️ Development
@@ -204,14 +204,21 @@ mypy src/
 ### CLI Usage
 
 ```python
-from movie_rag import EnhancedMovieRAGSystem
+from movie_rag.core.movie_rag_system import MovieRAGSystem
 
 # Initialize system
-rag = EnhancedMovieRAGSystem()
+rag = MovieRAGSystem()
 
 # Get recommendations
 recommendations = rag.get_recommendations(
     "I want a sci-fi movie with time travel"
+)
+
+# Advanced search
+sci_fi_movies = rag.search_movies_advanced(
+    genre="Science Fiction",
+    min_rating=8.0,
+    year=2020
 )
 
 # Analyze movie trends
@@ -256,6 +263,36 @@ top_movies = db.get_top_rated_movies(limit=10)
 - Configure PostgreSQL connection pooling
 - Implement caching for frequent queries
 - Optimize ChromaDB collection settings
+
+## 🏗️ Modular Architecture
+
+The system follows a **modular architecture** for better maintainability and scalability:
+
+### Core Components
+
+1. **`movie_rag_system.py`** - Main orchestrator
+   - Initializes all components
+   - Manages AI model configuration
+   - Delegates operations to specialized managers
+
+2. **`vectorstore_manager.py`** - ChromaDB operations
+   - Document processing and text splitting
+   - Vector store creation and management
+   - Batch processing for large datasets
+   - ChromaDB connection handling
+
+3. **`qa_chain_manager.py`** - LLM operations
+   - QA chain setup with custom prompts
+   - Movie recommendation logic
+   - Advanced search functionality
+   - Mood-based recommendations
+
+### Benefits
+
+- ✅ **Separation of Concerns**: Each component has a single responsibility
+- ✅ **Easy Testing**: Components can be tested independently
+- ✅ **Maintainability**: Changes are isolated to specific areas
+- ✅ **Scalability**: Easy to add new features or swap components
 
 ## 📈 Roadmap
 

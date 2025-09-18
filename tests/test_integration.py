@@ -113,7 +113,7 @@ def show_next_steps():
     print(f"❓ OpenAI API: {'✅ Configured' if os.getenv('OPENAI_API_KEY') else '❌ Missing'}")
     
     print(f"\n🚀 Ready to run:")
-    print(f"   uv run main.py               (CLI interface - requires API key)")
+    print(f"   uv run main.py               (CLI interface - refactored modular architecture)")
     print(f"   uv run run_streamlit.py      (Web interface - requires API key)")
 
 if __name__ == "__main__":

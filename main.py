@@ -11,7 +11,7 @@ from pathlib import Path
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-from movie_rag.core.movie_rag_enhanced import main
+from movie_rag.core.movie_rag_system import main
 
 if __name__ == "__main__":
     print("🎬 Starting Movie RAG System...")

@@ -34,7 +34,7 @@ def test_imports():
         return False
     
     try:
-        from movie_rag.core.movie_rag_enhanced import MovieRAGSystem
+        from movie_rag.core.movie_rag_system import MovieRAGSystem
         print("✅ RAG system")
     except ImportError as e:
         print(f"❌ RAG system: {e}")

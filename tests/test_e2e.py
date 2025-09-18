@@ -100,7 +100,7 @@ def test_rag_system():
     print("\n🤖 Testing RAG system...")
     
     try:
-        from movie_rag.core.movie_rag_enhanced import MovieRAGSystem
+        from movie_rag.core.movie_rag_system import MovieRAGSystem
         
         print("🔄 Initializing RAG system...")
         rag_system = MovieRAGSystem()

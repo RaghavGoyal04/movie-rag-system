@@ -46,7 +46,7 @@ def test_postgres_connection():
         
         # Step 2: Test RAG system import
         print("\n2️⃣ Testing RAG system import...")
-        from movie_rag.core.movie_rag_enhanced import MovieRAGSystem
+        from movie_rag.core.movie_rag_system import MovieRAGSystem
         print("✅ RAG system imported successfully")
         
         # Step 3: Check API keys
@@ -86,7 +86,7 @@ def test_postgres_connection():
             print(f"   2. Run: uv run main.py")
         else:
             print(f"\n🚀 Ready to run:")
-            print(f"   uv run movie_rag_enhanced.py")
+            print(f"   uv run main.py")
         
         return True
         

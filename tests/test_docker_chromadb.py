@@ -122,6 +122,6 @@ if __name__ == "__main__":
     
     if success:
         print(f"\n🚀 Ready to run Enhanced RAG system with Docker ChromaDB!")
-        print(f"   uv run movie_rag_enhanced.py")
+        print(f"   uv run main.py")
     else:
         print(f"\n🔧 Please fix ChromaDB connection issues before proceeding")
