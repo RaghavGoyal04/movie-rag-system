@@ -304,5 +304,5 @@ class VectorStoreManager:
         search_kwargs = search_kwargs or {"k": 8}
         return self.vectorstore.as_retriever(
             search_type="similarity",
-            search_kwargs=search_kwargs
+            search_kwargs=search_kwargs # Return top 8 results
         )
