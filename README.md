@@ -25,7 +25,7 @@ An AI-powered movie recommendation system using **RAG (Retrieval-Augmented Gener
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/movie-rag-system.git
+git clone https://github.com/RaghavGoyal04/movie-rag-system.git
 cd movie-rag-system
 
 # Install dependencies
