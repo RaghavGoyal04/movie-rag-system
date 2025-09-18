@@ -183,6 +183,148 @@ def _load_stats_directly():
             'date_range': '1902 - 2025'
         }, []
 
+@st.cache_data
+def get_popular_movies(limit: int = 5):
+    """Get top popular movies from the database"""
+    try:
+        # Try to get from RAG system first
+        rag_system = load_rag_system()
+        if rag_system and rag_system.db:
+            return _get_popular_from_rag_system(rag_system, limit)
+        
+        # Fallback: Connect directly to database
+        return _get_popular_directly(limit)
+        
+    except Exception as e:
+        print(f"Error loading popular movies: {e}")
+        # Return some fallback popular movies
+        return [
+            {
+                'title': 'The Shawshank Redemption',
+                'year': '1994',
+                'rating': 9.3,
+                'genres': ['Drama'],
+                'popularity': 95.2,
+                'overview': 'Two imprisoned men bond over a number of years...'
+            },
+            {
+                'title': 'The Godfather',
+                'year': '1972', 
+                'rating': 9.2,
+                'genres': ['Crime', 'Drama'],
+                'popularity': 93.8,
+                'overview': 'The aging patriarch of an organized crime dynasty...'
+            },
+            {
+                'title': 'The Dark Knight',
+                'year': '2008',
+                'rating': 9.0,
+                'genres': ['Action', 'Crime', 'Drama'],
+                'popularity': 92.5,
+                'overview': 'Batman raises the stakes in his war on crime...'
+            },
+            {
+                'title': 'Pulp Fiction',
+                'year': '1994',
+                'rating': 8.9,
+                'genres': ['Crime', 'Drama'],
+                'popularity': 91.3,
+                'overview': 'The lives of two mob hitmen, a boxer, a gangster...'
+            },
+            {
+                'title': 'Forrest Gump',
+                'year': '1994',
+                'rating': 8.8,
+                'genres': ['Drama', 'Romance'],
+                'popularity': 90.7,
+                'overview': 'The presidencies of Kennedy and Johnson...'
+            }
+        ]
+
+def _get_popular_from_rag_system(rag_system, limit: int = 5):
+    """Get popular movies using RAG system"""
+    try:
+        # Use the advanced search to get highly rated and popular movies
+        popular_movies = rag_system.search_movies_advanced(
+            min_rating=8.0,
+            limit=limit * 2  # Get more to filter for popularity
+        )
+        
+        # Sort by popularity and rating combination
+        if popular_movies:
+            # Calculate a combined score for better ranking
+            for movie in popular_movies:
+                movie['combined_score'] = (movie['rating'] * 0.7) + (movie.get('popularity', 0) * 0.003)
+            
+            # Sort by combined score and return top results
+            sorted_movies = sorted(popular_movies, key=lambda x: x['combined_score'], reverse=True)
+            return sorted_movies[:limit]
+        
+        return []
+        
+    except Exception as e:
+        print(f"Error in _get_popular_from_rag_system: {e}")
+        return []
+
+def _get_popular_directly(limit: int = 5):
+    """Get popular movies by connecting directly to database"""
+    try:
+        from movie_rag.models.database import DatabaseManager
+        import os
+        
+        # Build database URL
+        postgres_host = os.getenv("POSTGRES_HOST", "localhost")
+        postgres_port = os.getenv("POSTGRES_PORT", "5433")
+        postgres_user = os.getenv("POSTGRES_USER", "postgres")
+        postgres_password = os.getenv("POSTGRES_PASSWORD", "movie_rag_password")
+        postgres_db = os.getenv("POSTGRES_DB", "movie_rag_db")
+        
+        database_url = f"postgresql://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db}"
+        
+        # Connect to database directly
+        db = DatabaseManager(database_url)
+        session = db.get_session()
+        
+        from movie_rag.models.database import Movie
+        from sqlalchemy import and_
+        from sqlalchemy.orm import joinedload
+        
+        # Get popular movies with high ratings
+        movies = session.query(Movie).options(
+            joinedload(Movie.genres),
+            joinedload(Movie.directors),
+            joinedload(Movie.actors)
+        ).filter(
+            and_(
+                Movie.vote_average >= 8.0,
+                Movie.vote_count >= 1000,
+                Movie.popularity.isnot(None)
+            )
+        ).order_by(
+            Movie.popularity.desc(),
+            Movie.vote_average.desc()
+        ).limit(limit).all()
+        
+        popular_movies = []
+        for movie in movies:
+            popular_movies.append({
+                'title': movie.title,
+                'year': movie.release_date[:4] if movie.release_date else 'Unknown',
+                'rating': movie.vote_average or 0,
+                'genres': [g.name for g in movie.genres],
+                'popularity': movie.popularity or 0,
+                'overview': movie.overview[:200] + '...' if movie.overview else '',
+                'directors': [d.name for d in movie.directors],
+                'actors': [a.name for a in movie.actors[:3]]
+            })
+        
+        session.close()
+        return popular_movies
+        
+    except Exception as e:
+        print(f"Error in _get_popular_directly: {e}")
+        return []
+
 def main():
     """Main application"""
     
@@ -260,9 +402,9 @@ def main():
         with col1:
             search_btn = st.button("🔮 Get Recommendations", type="primary")
         with col2:
-            st.button("🎲 Surprise Me", help="Get random recommendations")
+            surprise_btn = st.button("🎲 Surprise Me", help="Get top 5 popular movies")
         with col3:
-            st.button("🔄 Clear", help="Clear current search")
+            clear_btn = st.button("🔄 Clear", help="Clear current search")
         
         if search_btn and query:
             with st.spinner("🎬 Searching through our movie database..."):
@@ -306,7 +448,54 @@ def main():
                         st.error(f"Error getting recommendations: {e}")
                 else:
                     st.error("RAG system not available. Please make sure the movie dataset is loaded.")
-    
+        
+        # Handle Surprise Me button
+        if surprise_btn:
+            with st.spinner("🎲 Finding popular movies for you..."):
+                try:
+                    popular_movies = get_popular_movies()
+                    
+                    if popular_movies:
+                        st.markdown(f"""
+                        <div class="recommendation-box">
+                            <h3>🎲 Surprise! Here are 5 Popular Movies:</h3>
+                            <p style="font-size: 1.1rem; line-height: 1.6;">These movies are highly rated and popular among viewers. Perfect for when you can't decide what to watch!</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Display popular movies
+                        st.markdown("### 🌟 Top Popular Movies:")
+                        
+                        cols = st.columns(min(len(popular_movies), 3))
+                        for i, movie in enumerate(popular_movies[:3]):
+                            with cols[i]:
+                                st.markdown(f"""
+                                <div class="movie-card">
+                                    <h4>{movie['title']}</h4>
+                                    <p><strong>Year:</strong> {movie['year']}</p>
+                                    <p><strong>Rating:</strong> ⭐ {movie['rating']}/10</p>
+                                    <p><strong>Genres:</strong> {', '.join(movie['genres']) if isinstance(movie['genres'], list) else movie['genres']}</p>
+                                    <p><strong>Popularity:</strong> {movie['popularity']:.1f}</p>
+                                </div>
+                                """, unsafe_allow_html=True)
+                        
+                        # Show remaining movies in expander
+                        if len(popular_movies) > 3:
+                            with st.expander(f"See {len(popular_movies) - 3} more popular movies"):
+                                for movie in popular_movies[3:]:
+                                    st.write(f"• **{movie['title']}** ({movie['year']}) - ⭐ {movie['rating']}/10 - Popularity: {movie['popularity']:.1f}")
+                    else:
+                        st.error("Unable to load popular movies at the moment.")
+                        
+                except Exception as e:
+                    st.error(f"Error loading popular movies: {e}")
+        
+        # Handle Clear button
+        if clear_btn:
+            st.session_state.query_input = ""
+            st.rerun()
+ 
+
     with tab2:
         st.markdown("## 🔍 Advanced Movie Search")
         
